@@ -96,3 +96,18 @@ body {
   @apply px-4 py-2 border border-gray-600 text-gray-300 font-medium rounded-lg 
          hover:border-gray-400 hover:text-white transition-all;
 }
+
+.glass {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

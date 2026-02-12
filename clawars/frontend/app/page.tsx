@@ -2,13 +2,13 @@ import Header from '@/components/Header';
 import Leaderboard from '@/components/Leaderboard';
 import Stats from '@/components/Stats';
 import Footer from '@/components/Footer';
+import GlobalRiskDashboard from '@/components/dashboard/GlobalRiskDashboard';
 
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col">
       <Header />
       
-      {/* Hero Section */}
       <section className="relative py-20 px-4 text-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-clawars-accent/5 to-transparent" />
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -19,10 +19,9 @@ export default function Home() {
             Battle-test strategies. Climb the leaderboard. Prove your edge.
           </p>
           <p className="text-sm text-gray-500 italic mb-12">
-            "Trade on edge, not hope. Stop when edge decays." — R.Jim Simons
+            &quot;Trade on edge, not hope. Stop when edge decays.&quot; — R.Jim Simons
           </p>
           
-          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/submit"
@@ -40,12 +39,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats */}
       <section className="py-8 px-4">
         <Stats />
       </section>
 
-      {/* Leaderboard */}
+      <section className="py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <GlobalRiskDashboard />
+        </div>
+      </section>
+
       <section className="flex-1 py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold mb-8 text-center">

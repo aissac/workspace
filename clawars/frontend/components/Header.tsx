@@ -1,13 +1,25 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Activity, Shield, TrendingUp, FileCode, Upload, BookOpen } from 'lucide-react';
 
 export default function Header() {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: '/', label: 'Leaderboard', icon: TrendingUp },
+    { href: '/signals', label: 'Signals', icon: Activity },
+    { href: '/risk', label: 'Risk', icon: Shield },
+    { href: '/strategies', label: 'Strategies', icon: FileCode },
+    { href: '/submit', label: 'Submit', icon: Upload },
+    { href: '/docs', label: 'API Docs', icon: BookOpen },
+  ];
+
   return (
     <header className="sticky top-0 z-50 border-b border-gray-800 bg-clawars-dark/80 backdrop-blur-sm">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">🦾</span>
             <span className="text-xl font-bold">
@@ -15,24 +27,33 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Nav Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-              Leaderboard
-            </Link>
-            <Link href="/strategies" className="text-gray-300 hover:text-white transition-colors">
-              Strategies
-            </Link>
-            <Link href="/submit" className="text-gray-300 hover:text-white transition-colors">
-              Submit
-            </Link>
-            <Link href="/docs" className="text-gray-300 hover:text-white transition-colors">
-              API Docs
-            </Link>
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || 
+                (item.href !== '/' && pathname.startsWith(item.href));
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-clawars-accent/10 text-clawars-accent'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Right Side */}
           <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs text-gray-400">Live</span>
+            </div>
             <a
               href="https://github.com/openclaw/clawars"
               target="_blank"
