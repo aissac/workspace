@@ -1,38 +1,184 @@
-# Heartbeat Log - 2026-02-11 21:06:00 EST
+=== HEARTBEAT 2026-02-11 23:48:03 ===
 
-## System Health Check
+### SUMMARY ###
+Status: HEALTHY
+Memory: 63% used (2.8Gi available) - OK
+Disk: 50% used - OK
+Load: 0.20 - OK
+Ollama: active
+Docker: running
+Gateway: reachable
+SSH failures: none detected
+UFW: not available (nftables may be in use)
+Suspicious processes: none
 
-### Resources
-- **Memory:** 4.7Gi/7.4Gi (63%) - Available: 2.8Gi ✅
-- **Swap:** 1.3Gi/4.0Gi (33%) ✅
-- **Disk (/):** 36G/77G (49%) ✅
-- **Load Average:** 0.56 0.45 0.48 ✅ (low, no pressure)
+Result: [HEARTBEAT_OK]
 
-### Services
-- **Ollama:** Active ✅
-- **Docker:** Running (28.2.2) ✅
-- **OpenClaw Gateway:** Active, reachable 22ms ✅
+=== DETAILS ===
 
-### Security
-- **Failed SSH attempts (last 20):** 0 ✅
-- **UFW Logging:** No blocked entries
-- **Suspicious processes:** None detected ✅
-  - Running: Chrome, VS Code, system services (normal)
+### SYSTEM CHECKS ###
 
-### OpenClaw Status
-- **Sessions:** 16 active (1 main, subagents, cron workers)
-- **Cron Jobs:** 3 configured, all healthy
-  - system-heartbeat-file: Running (next in 29m)
-  - security-audit: Idle (next in 5h)
-  - update-status: Idle (next in 1d)
+## Memory ##
+               total        used        free      shared  buff/cache   available
+Mem:           7.4Gi       4.7Gi       569Mi       941Mi       3.4Gi       2.8Gi
+Swap:          4.0Gi       1.4Gi       2.6Gi
 
-## Alert Thresholds
-| Metric | Current | Threshold | Status |
-|--------|---------|-----------|--------|
-| Memory | 63% | >90% | ✅ OK |
-| Disk | 49% | >85% | ✅ OK |
-| Load | 0.56 | >2x cores | ✅ OK |
-| Failed SSH | 0 | Any new IPs | ✅ OK |
+## Disk ##
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p7   77G   36G   37G  50% /
 
-## Result: [HEARTBEAT_OK]
-All systems nominal. No action required.
+## Ollama ##
+active
+
+## Docker ##
+Client:
+ Version:    28.2.2
+ Context:    default
+ Debug Mode: false
+
+
+## Load Average ##
+0.20 0.15 0.06 1/1771 40656
+
+### SECURITY CHECKS ###
+
+## Failed SSH (last 20) ##
+
+## UFW Status ##
+ufw not available
+
+## Suspicious Processes ##
+root           5  0.0  0.0      0     0 ?        I<   Feb10   0:00 [kworker/R-sync_wq]
+systemd+     860  0.0  0.0  91052  7004 ?        Ssl  Feb10   0:00 /usr/lib/systemd/systemd-timesyncd
+issac-a+    2581  0.0  0.1 382940  7840 ?        Sl   Feb10   0:00 /usr/libexec/at-spi-bus-launcher --launch-immediately
+issac-a+    3602  0.8  3.2 51281000 257012 ?     SLl  Feb10  15:43 /opt/google/chrome/chrome http://127.0.0.1:18789/__openclaw__/canvas/
+issac-a+    3650  2.1  1.7 51559820 135556 ?     Sl   Feb10  39:05 /opt/google/chrome/chrome --type=gpu-process --ozone-platform=wayland --render-node-override=/dev/dri/renderD128 --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --gpu-preferences=UAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAYAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --shared-files --metrics-shmem-handle=4,i,18438474560408466299,14926753267544077484,262144 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190708988185955192
+issac-a+    9820  0.0  1.5 1461467760 118980 ?   SLsl Feb10   1:01 /snap/code/221/usr/share/code/code --no-sandbox --force-user-env /home/issac-asimov/.openclaw/subagents/runs.json --ozone-platform=x11
+issac-a+    9871  0.0  0.7 33888520 55948 ?      Sl   Feb10   0:14 /proc/self/exe --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --crashpad-handler-pid=9837 --enable-crash-reporter=d9643729-d9c3-44d9-bd0c-4351e0202ffa,no_channel --user-data-dir=/home/issac-asimov/.config/Code --standard-schemes=vscode-webview,vscode-file --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,7959133928984239293,7918870934797127221,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --trace-process-track-uuid=3190708989122997041
+issac-a+    9958  0.1  1.1 34020424 86096 ?      Sl   Feb10   2:24 /proc/self/exe --type=gpu-process --disable-gpu-sandbox --no-sandbox --disable-skia-graphite --ozone-platform=x11 --crashpad-handler-pid=9837 --enable-crash-reporter=d9643729-d9c3-44d9-bd0c-4351e0202ffa,no_channel --user-data-dir=/home/issac-asimov/.config/Code --gpu-preferences=UAAAAAAAAAAgAAAEAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAABgAAAAAAAAAAQAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --use-gl=angle --use-angle=swiftshader-webgl --shared-files --field-trial-handle=3,i,7959133928984239293,7918870934797127221,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --trace-process-track-uuid=3190708992871164437
+issac-a+    9996  0.0  1.0 1478109808 84400 ?    Sl   Feb10   0:22 /proc/self/exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --no-sandbox --crashpad-handler-pid=9837 --enable-crash-reporter=d9643729-d9c3-44d9-bd0c-4351e0202ffa,no_channel --user-data-dir=/home/issac-asimov/.config/Code --standard-schemes=vscode-webview,vscode-file --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,7959133928984239293,7918870934797127221,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --trace-process-track-uuid=3190708993808206286
+issac-a+    9997  0.0  1.0 1461341444 81056 ?    Sl   Feb10   0:53 /proc/self/exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --no-sandbox --crashpad-handler-pid=9837 --enable-crash-reporter=d9643729-d9c3-44d9-bd0c-4351e0202ffa,no_channel --user-data-dir=/home/issac-asimov/.config/Code --standard-schemes=vscode-webview,vscode-file --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,7959133928984239293,7918870934797127221,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --trace-process-track-uuid=3190708994745248135
+issac-a+    9998  0.0  2.8 1461336548 219276 ?   Sl   Feb10   0:31 /proc/self/exe --type=utility --utility-sub-type=node.mojom.NodeService --lang=en-US --service-sandbox-type=none --no-sandbox --dns-result-order=ipv4first --experimental-network-inspection --inspect-port=0 --crashpad-handler-pid=9837 --enable-crash-reporter=d9643729-d9c3-44d9-bd0c-4351e0202ffa,no_channel --user-data-dir=/home/issac-asimov/.config/Code --standard-schemes=vscode-webview,vscode-file --secure-schemes=vscode-webview,vscode-file --cors-schemes=vscode-webview,vscode-file --fetch-schemes=vscode-webview,vscode-file --service-worker-schemes=vscode-webview --code-cache-schemes=vscode-webview,vscode-file --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,7959133928984239293,7918870934797127221,262144 --enable-features=DocumentPolicyIncludeJSCallStacksInCrashReports,EarlyEstablishGpuChannel,EstablishGpuChannelAsync --disable-features=CalculateNativeWinOcclusion,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --trace-process-track-uuid=3190708995682289984
+issac-a+   10316  0.0  0.7 1459515692 55920 ?    Sl   Feb10   0:03 /snap/code/221/usr/share/code/code --max-old-space-size=3072 /snap/code/221/usr/share/code/resources/app/extensions/node_modules/typescript/lib/tsserver.js --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName /tmp/vscode-typescript1000/f2b12adac0a33470c86f/tscancellation-6219f05e6c2c3093a1ec.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/issac-asimov/.vscode/extensions/github.copilot-chat-0.37.1 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc
+issac-a+   10317  0.0  1.0 1459515628 81368 ?    Sl   Feb10   0:04 /snap/code/221/usr/share/code/code --max-old-space-size=3072 /snap/code/221/usr/share/code/resources/app/extensions/node_modules/typescript/lib/tsserver.js --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName /tmp/vscode-typescript1000/f2b12adac0a33470c86f/tscancellation-5971c1998878f9bac06d.tmp* --globalPlugins @vscode/copilot-typescript-server-plugin --pluginProbeLocations /home/issac-asimov/.vscode/extensions/github.copilot-chat-0.37.1 --locale en --noGetErrOnBackgroundUpdate --canUseWatchEvents --validateDefaultNpmLocation --useNodeIpc
+issac-a+   15327  0.7  3.5 1460075452 278136 ?   Sl   01:47  10:06 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=11 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=25066924599 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,6767420737139913343,10669065721262283454,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190708996619331833
+issac-a+   18279  0.0  2.7 1463505760 216676 ?   Sl   02:30   0:28 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=22 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=27635675291 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,1956974511267650558,16237398262665285938,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709006926792172
+issac-a+   25792  0.0  2.1 1461755824 166176 ?   Sl   14:37   0:04 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=56 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=47982748636 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,2926926368936442684,17795395003913800457,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709038786215038
+issac-a+   25815  0.0  1.4 1460033828 114376 ?   Sl   14:37   0:00 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=57 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=47994949150 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,12827433580533959400,5894588981037915552,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709039723256887
+issac-a+   30803  0.0  2.2 1460058436 174128 ?   Sl   18:07   0:13 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=79 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=60608124825 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,1392031830016212829,12689542147402282400,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709060338177565
+issac-a+   32545  8.4  2.9 1460067428 228032 ?   Sl   18:45  25:41 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=21 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=62896043077 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,9491656911584944211,15748252704641268887,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709005989750323
+issac-a+   32772  0.0  0.7 1012188 56796 pts/4   Sl+  18:57   0:00 openclaw
+issac-a+   32779  0.6  6.6 23494640 519772 pts/4 Sl+  18:57   1:47 openclaw-gateway
+issac-a+   35999  0.0  1.7 1460045444 136980 ?   Sl   20:39   0:02 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=87 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=69725836186 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,10327812644611848877,3458009889046129045,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709067834512357
+issac-a+   36309  0.0  0.8 1459967052 66236 ?    Sl   20:43   0:00 /opt/google/chrome/chrome --type=renderer --crashpad-handler-pid=3611 --enable-crash-reporter=d376670c-59d4-412e-9a23-992648403004, --change-stack-guard-on-fork=enable --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=92 --time-ticks-at-unix-epoch=-1770759990562711 --launch-time-ticks=69986557516 --shared-files=v8_context_snapshot_data:100 --metrics-shmem-handle=4,i,11503333958570501434,12858512220941370601,2097152 --field-trial-handle=3,i,7233653604882601673,6180502132100039040,262144 --disable-features=EyeDropper --variations-seed-version=20260210-090105.244000 --trace-process-track-uuid=3190709072519721602
+root       40149  0.0  0.0      0     0 ?        I    23:07   0:00 [kworker/u48:1-async]
+root       40408  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:4-async]
+root       40409  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:5-async]
+root       40410  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:6-async]
+root       40411  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:7-async]
+root       40413  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:8-async]
+root       40415  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:9-async]
+root       40416  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:10-async]
+root       40417  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:11-async]
+root       40418  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:12-async]
+root       40420  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:13-async]
+root       40421  0.0  0.0      0     0 ?        I    23:17   0:00 [kworker/u48:14-async]
+root       40422  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:15-async]
+root       40423  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:16-async]
+root       40424  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:17-async]
+root       40425  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:18-async]
+root       40427  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:20-async]
+root       40428  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:21-async]
+root       40429  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:22-async]
+root       40430  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:23-async]
+root       40431  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:24-async]
+root       40432  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:25-async]
+root       40433  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:26-async]
+root       40434  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:27-async]
+root       40435  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:28-async]
+root       40436  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:29-async]
+root       40437  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:30-async]
+root       40438  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:31-async]
+root       40439  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:32-async]
+root       40440  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:33-async]
+root       40441  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:34-async]
+root       40442  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:35-async]
+root       40443  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:36-async]
+root       40444  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:37-async]
+root       40445  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:38-async]
+root       40446  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:39-async]
+root       40447  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:40-async]
+root       40448  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:41-async]
+root       40449  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:42-async]
+root       40450  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:43-async]
+root       40452  0.0  0.0      0     0 ?        I    23:47   0:00 [kworker/u48:45-async]
+
+### OPENCLAW ###
+
+## Gateway Status ##
+OpenClaw status
+
+Overview
+┌─────────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Item            │ Value                                                                                             │
+├─────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Dashboard       │ http://127.0.0.1:18789/                                                                           │
+│ OS              │ linux 6.14.0-37-generic (x64) · node 22.22.0                                                      │
+│ Tailscale       │ off                                                                                               │
+│ Channel         │ stable (default)                                                                                  │
+│ Update          │ pnpm · npm latest 2026.2.9                                                                        │
+│ Gateway         │ local · ws://127.0.0.1:18789 (local loopback) · reachable 21ms · auth token · R.Daneel-Olivaw     │
+│                 │ (172.20.10.4) app unknown linux 6.14.0-37-generic                                                 │
+│ Gateway service │ systemd installed · enabled · stopped (state inactive)                                            │
+│ Node service    │ systemd not installed                                                                             │
+│ Agents          │ 1 · 1 bootstrapping · sessions 19 · default main active 1m ago                                    │
+│ Memory          │ enabled (plugin memory-core) · unavailable                                                        │
+│ Probes          │ skipped (use --deep)                                                                              │
+│ Events          │ none                                                                                              │
+│ Heartbeat       │ 30m (main)                                                                                        │
+│ Sessions        │ 19 active · default glm-5:cloud (200k ctx) · ~/.openclaw/agents/main/sessions/sessions.json       │
+└─────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+Security audit
+Summary: 0 critical · 1 warn · 1 info
+  WARN Reverse proxy headers are not trusted
+    gateway.bind is loopback and gateway.trustedProxies is empty. If you expose the Control UI through a reverse proxy, configure trusted proxies so local-client c…
+    Fix: Set gateway.trustedProxies to your proxy IPs or keep the Control UI local-only.
+Full report: openclaw security audit
+Deep probe: openclaw security audit --deep
+
+Channels
+┌──────────┬─────────┬────────┬───────────────────────────────────────────────────────────────────────────────────────┐
+│ Channel  │ Enabled │ State  │ Detail                                                                                │
+├──────────┼─────────┼────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+└──────────┴─────────┴────────┴───────────────────────────────────────────────────────────────────────────────────────┘
+
+Sessions
+┌─────────────────────────────────────────────────────────────────┬────────┬─────────┬──────────────┬─────────────────┐
+│ Key                                                             │ Kind   │ Age     │ Model        │ Tokens          │
+├─────────────────────────────────────────────────────────────────┼────────┼─────────┼──────────────┼─────────────────┤
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 1m ago  │ glm-5:cloud  │ 0.0k/200k (0%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 1m ago  │ glm-5:cloud  │ 0.0k/200k (0%)  │
+│ agent:main:main                                                 │ direct │ 41m ago │ glm-5:cloud  │ 139k/200k (69%) │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 42m ago │ glm-5:cloud  │ 50k/200k (25%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 1h ago  │ glm-5:cloud  │ 45k/200k (22%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 2h ago  │ glm-5:cloud  │ 61k/200k (30%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 2h ago  │ glm-5:cloud  │ 48k/200k (24%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 3h ago  │ glm-5:cloud  │ 72k/200k (36%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 3h ago  │ glm-5:cloud  │ 66k/200k (33%)  │
+│ agent:main:cron:bc5068fb-c740-4…                                │ direct │ 4h ago  │ glm-5:cloud  │ 62k/200k (31%)  │
+└─────────────────────────────────────────────────────────────────┴────────┴─────────┴──────────────┴─────────────────┘
+
+FAQ: https://docs.openclaw.ai/faq
+Troubleshooting: https://docs.openclaw.ai/troubleshooting
+
+Next steps:
+  Need to share?      openclaw status --all
+  Need to debug live? openclaw logs --follow
+  Need to test channels? openclaw status --deep
+
+## Cron Jobs ##
+ID                                   Name                     Schedule                         Next       Last       Status    Target    Agent     
+bc5068fb-c740-44d8-b49b-875d74bc57dd system-heartbeat-file    every 30m                        in 18m     42m ago    running   isolated  main
+6ae7583a-ee3b-4217-9a33-67ac7efc6ccd security-audit           cron 0 2 * * * @ America/New_... in 2h      -          idle      isolated  main
+14e6100c-1647-4529-b0fa-3baebd1778df update-status            cron 0 3 * * 5 @ America/New_... in 1d      -          idle      isolated  main

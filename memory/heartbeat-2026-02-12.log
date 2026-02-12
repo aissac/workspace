@@ -1,0 +1,24 @@
+=== HEARTBEAT: 2026-02-12 10:36 AM EST ===
+
+[MEMORY/DISK]
+- Memory: 4.4Gi/7.4Gi (59%) - OK
+- Swap: 1.4Gi/4.0Gi (35%) - OK  
+- Disk: 36G/77G (50%) - OK
+- Load: 0.00 0.02 0.07 - OK
+
+[SERVICES]
+- Ollama: active - OK
+- Docker: 28.2.2 running - OK
+- Gateway: local, reachable 31ms - OK
+
+[SECURITY]
+- Failed SSH (last 20): 0 - OK
+- No suspicious activity detected
+
+[OPENCLAW]
+- Status: healthy
+- Sessions: 33 active
+- Main session: 95k/200k tokens (47%)
+
+[RESULT] HEARTBEAT_OK - All systems nominal
+[2026-02-12 10:55:14] Heartbeat: OK. Memory 62%, Disk 50%, Load 0.26, Services active.

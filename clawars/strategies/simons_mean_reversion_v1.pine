@@ -1,0 +1,85 @@
+//@version=5
+strategy("Simons_MeanReversion_v1", 
+         overlay=true, 
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=10,
+         commission_type=strategy.commission.percent,
+         commission_value=0.1)
+
+// ═════════════════════════════════════════════════════════════════════════════
+// R.JIM SIMONS — MEAN REVERSION STRATEGY
+// 
+// Philosophy: Prices revert to mean in established markets. Trade with the 
+//             higher timeframe trend, only entering on oversold/overbought
+//             extremes at Bollinger Band edges.
+//
+// Asset Universe: BTC, ETH, SOL, AVAX, NEAR, BNB (>$1B market cap only)
+// NO MEME COINS — Strictly enforced
+// ═════════════════════════════════════════════════════════════════════════════
+
+// === PARAMETERS ===
+rsiLength = input.int(14, "RSI Length", minval=5, maxval=30)
+bbLength = input.int(20, "BB Length", minval=10, maxval=50)
+bbMult = input.float(2.0, "BB Std Dev", minval=1.0, maxval=4.0)
+atrLength = input.int(14, "ATR Length", minval=5, maxval=30)
+riskReward = input.float(1.5, "Min R/R Ratio", minval=1.0, maxval=3.0)
+
+// === DAILY TREND FILTER ===
+// Only trade with the higher timeframe trend
+isDailyBull = request.security(syminfo.tickerid, "D", close > ta.sma(close, 50))
+isDailyBear = request.security(syminfo.tickerid, "D", close < ta.sma(close, 50))
+
+// === INDICATORS ===
+rsi = ta.rsi(close, rsiLength)
+bb = ta.bb(close, bbLength, bbMult)
+bbUpper = bb[0]   // Upper band
+bbLower = bb[2]   // Lower band
+bbWidth = (bbUpper - bbLower) / bbLower  // Bandwidth %
+atr = ta.atr(atrLength)
+
+// === ENTRY CONDITIONS ===
+// Mean reversion in oversold conditions, with trend
+oversold = rsi < 35 and close < bbLower and isDailyBull
+overbought = rsi > 65 and close > bbUpper and isDailyBear
+
+// === STOP LOSS & TAKE PROFIT ===
+// Dynamic based on ATR for volatility-adjustment
+longStop = close - (1.5 * atr)
+longTarget = close + (1.5 * atr * riskReward)
+shortStop = close + (1.5 * atr)
+shortTarget = close - (1.5 * atr * riskReward)
+
+// === EXECUTION ===
+if (oversold and barstate.isconfirmed and strategy.position_size == 0)
+    strategy.entry("Long", strategy.long)
+    strategy.exit("LongExit", "Long", stop=longStop, limit=longTarget)
+
+if (overbought and barstate.isconfirmed and strategy.position_size == 0)
+    strategy.entry("Short", strategy.short)
+    strategy.exit("ShortExit", "Short", stop=shortStop, limit=shortTarget)
+
+// === WEBHOOK ALERT ===
+alertMessage = oversold ? 
+    '{"action":"BUY","ticker":"' + syminfo.ticker + 
+    '","price":' + str.tostring(close) + 
+    ',"stop":' + str.tostring(longStop) + 
+    ',"target":' + str.tostring(longTarget) + '}' :
+    overbought ?
+    '{"action":"SELL","ticker":"' + syminfo.ticker + 
+    '","price":' + str.tostring(close) + 
+    ',"stop":' + str.tostring(shortStop) + 
+    ',"target":' + str.tostring(shortTarget) + '}' :
+    ""
+
+if (alertMessage != "")
+    alert(alertMessage, alert.freq_once_per_bar_close)
+
+// === VISUALS ===
+plot(bbUpper, "BB Upper", color=color.new(color.red, 50))
+plot(bbLower, "BB Lower", color=color.new(color.green, 50))
+plot(ta.sma(close, 50), "Daily SMA", color=color.orange)
+
+// Background colors for signals
+bgcolor(oversold ? color.new(color.green, 90) : na)
+bgcolor(overbought ? color.new(color.red, 90) : na)
