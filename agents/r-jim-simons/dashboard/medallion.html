@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R.Jim Simons — Medallion Trading Floor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { 
+            font-family: 'Inter', sans-serif; 
+            box-sizing: border-box;
+        }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --color-white: #ffffff;
+            --color-amber: #ff9500;
+            --color-red: #ff3333;
+            --color-green: #333333;  /* No "good" green - just dark */
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        /* Flashing alerts */
+        @keyframes flash-red {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(255, 51, 51, 0.3); }
+        }
+        
+        @keyframes flash-amber {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(255, 149, 0, 0.3); }
+        }
+        
+        .flash-red {
+            animation: flash-red 0.5s ease-in-out infinite;
+        }
+        
+        .flash-amber {
+            animation: flash-amber 0.5s ease-in-out infinite;
+        }
+        
+        /* Grid */
+        .medallion-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-rows: auto 1fr 1fr;
+            gap: 1px;
+            background: #222;
+            min-height: calc(100vh - 120px);
+        }
+        
+        .medallion-grid > div {
+            background: var(--bg-secondary);
+            padding: 12px;
+        }
+        
+        /* Heatmap cells */
+        .heatmap-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        /* Donut chart */
+        .donut-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        /* Status indicators */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .status-on { background: var(--color-white); box-shadow: 0 0 6px var(--color-white); }
+        .status-standby { background: var(--color-amber); box-shadow: 0 0 6px var(--color-amber); }
+        .status-off { background: #444; }
+        
+        /* THE ONE NUMBER */
+        .sharpe-display {
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+        
+        .sharpe-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- TOP BAR: THE ONE NUMBER -->
+    <header class="h-24 border-b border-gray-800 flex items-center justify-between px-8 bg-black">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div id="system-status" class="w-3 h-3 rounded-full bg-white animate-pulse"></div>
+                <span class="text-xs uppercase tracking-widest text-gray-400 font-medium">System: LIVE</span>
+            </div>
+            
+            <div class="h-8 w-px bg-gray-800"></div>
+            
+            <div class="text-xs text-gray-500">
+                <span class="text-gray-300">Capital:</span> <span id="capital-pct" class="text-white font-bold">78%</span>
+            </div>
+        </div>
+
+        <!-- THE ONE NUMBER -->
+        <div class="text-center">
+            <p class="sharpe-label mb-1"></p>
+            <div class="flex items-baseline justify-center gap-4">
+                <span class="sharpe-label">Pred 1H Sharpe:</span>
+                <span id="pred-sharpe" class="sharpe-display text-white">1.84</span>
+            </div>
+            <p id="sharpe-status" class="text-xs mt-1 text-gray-500">EDGE THERMOMETER</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <p class="text-xs text-gray-500 uppercase tracking-wide">Last Calc</p>
+                <p id="last-calc-time" class="text-xs mono text-gray-400">17:24:18</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GRID -->
+    <div class="medallion-grid">
+        
+        <!-- SIGNAL STRENGTH HEATMAP (6x4) -->
+        <div class="col-span-1">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs uppercase tracking-widest font-semibold text-gray-300 flex items-center gap-2">
+                    <i data-lucide="grid-3x3" class="w-3 h-3"></i>
+                    Signal Strength Heatmap
+                </h3>
+                <span class="text-[10px] text-gray-500">Z-Score >3σ</span>
+            </div>
+            
+            <div id="heatmap-container" class="grid grid-cols-4 gap-px bg-gray-800">
+                <!-- Generated by JS -->
+            </div>
+            
+            <div class="mt-3 flex justify-between text-[10px] text-gray-500">
+                <span><span class="inline-block w-2 h-2 bg-white mr-1"></span>Active</span>
+                <span><span class="inline-block w-2 h-2 bg-red-500 mr-1"></span>>3σ</span>
+                <span><span class="inline-block w-2 h-2 bg-gray-600 mr-1"></span>Inactive</span>
+            </div>
+        </div>
+
+        <!-- EXECUTION SLIPPAGE MONITOR -->
+        <div class="col-span-1">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs uppercase tracking-widest font-semibold text-gray-300 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-3 h-3"></i>
+                    Execution Monitor
+                </h3>
+            </div>
+            
+            <div class="space-y-3">
+                <!-- Slippage Row -->
+                <div class="p-2 bg-gray-900 border border-gray-800">
+                    <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                        <span>Expected Slippage</span>
+                        <span class="mono">2.0 bps</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-gray-400">Actual</span>
+                        <span id="slippage-actual" class="mono text-sm font-bold text-white">3.1 bps</span>
+                    </div>
+                    <div class="mt-2 h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div id="slippage-bar" class="h-full bg-amber-500 transition-all" style="width: 55%"></div>
+                    </div>
+                    <div class="mt-1 text-[10px] text-amber-400 flex items-center gap-1">
+                        <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                        +55% vs expected
+                    </div>
+                </div>
+
+                <!-- Capacity Row -->
+                <div class="p-2 bg-gray-900 border border-gray-800">
+                    <div class="text-[10px] text-gray-500 mb-2">Capacity Utilization</div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="donut-container">
+                            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#222" stroke-width="10" />
+                                <circle id="capacity-ring" cx="60" cy="60" r="50" fill="none" stroke="#fff" stroke-width="10"
+                                    stroke-dasharray="251.2" stroke-dashoffset="62.8" stroke-linecap="round" />
+                            </svg>
+                            
+                            <div class="donut-center">
+                                <p id="capacity-pct" class="text-xl font-bold mono">75%</p>
+                                <p class="text-[8px] text-gray-500">UTILIZED</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 text-[10px] space-y-1">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Theoretical:</span>
+                                <span class="mono">$2.4M/hr</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Current:</span>
+                                <span class="mono text-white">$1.8M/hr</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">Headroom:</span>
+                                <span class="mono text-gray-400">$600K</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- REGIME DETECTION -->
+        <div class="col-span-1">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs uppercase tracking-widest font-semibold text-gray-300 flex items-center gap-2">
+                    <i data-lucide="cpu" class="w-3 h-3"></i>
+                    Regime Detection
+                </h3>
+                <span id="regime-alert" class="hidden"><i data-lucide="alert-triangle" class="w-3 h-3 text-amber-400"></i></span>
+            </div>
+            
+            <div class="space-y-2">
+                <!-- Strategy Status List -->
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between p-2 bg-gray-900 border border-gray-700">
+                        <div class="flex items-center gap-2">
+                            <span class="status-dot status-on"></span>
+                            <span class="text-xs font-medium">StatArb</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500">ON</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-2 bg-gray-900 border border-gray-800">
+                        <div class="flex items-center gap-2">
+                            <span class="status-dot status-standby"></span>
+                            <span class="text-xs font-medium text-amber-400">Trend Follow</span>
+                        </div>
+                        <span class="text-[10px] text-amber-400">STANDBY</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-2 bg-gray-900 border border-gray-800">
+                        <div class="flex items-center gap-2">
+                            <span class="status-dot status-off"></span>
+                            <span class="text-xs font-medium text-gray-600">MeanRev</span>
+                        </div>
+                        <span class="text-[10px] text-gray-600">OFF</span>
+                    </div>
+                </div>
+                
+                <!-- Correlation Status -->
+                <div class="mt-4 p-2 bg-gray-900 border border-gray-800">
+                    <p class="text-[10px] text-gray-500 mb-2">Cross-Asset Correlations</p>
+                    
+                    <div id="correlation-grid" class="grid grid-cols-4 gap-1">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALPHA DECAY CHART (Full Width Bottom) -->
+        <div class="col-span-3">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs uppercase tracking-widest font-semibold text-gray-300 flex items-center gap-2">
+                    <i data-lucide="trending-down" class="w-3 h-3"></i>
+                    Alpha Decay — Last 100 Trades
+                </h3>
+                
+                <div class="flex items-center gap-4 text-[10px]">
+                    <span class="flex items-center gap-1">
+                        <span class="w-2 h-2 bg-white"></span>
+                        Predicted Edge
+                    </span>
+                    
+                    <span class="flex items-center gap-1 text-gray-500">
+                        Slope: 
+                        <span id="decay-slope" class="text-white font-medium">-0.02 σ/trade</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="h-48 bg-gray-900 border border-gray-800 relative">
+                <canvas id="alpha-decay-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERT OVERLAY (Hidden by default) -->
+    <div id="alert-overlay" class="fixed inset-0 bg-red-500/20 hidden items-center justify-center z-50">
+        <div class="bg-black border-2 border-red-500 p-8 text-center">
+            <i data-lucide="octagon" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+            
+            <h2 class="text-3xl font-bold text-red-500 mb-2">HALT ALL STRATEGIES</h2>
+            
+            <p id="alert-reason" class="text-lg text-white">Predicted Sharpe < 0.5</p>
+            
+            <button onclick="dismissAlert()" class="mt-6 px-6 py-2 border border-gray-600 text-gray-300 hover:bg-gray-800">
+                ACKNOWLEDGE
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+
+        // =====================
+        // HEATMAP DATA
+        // =====================
+        const pairs = [
+            { name: 'BTC-ETH', z: 2.4 },
+            { name: 'BTC-SOL', z: -1.8 },
+            { name: 'ETH-AVAX', z: 0.9 },
+            { name: 'SOL-NEAR', z: -3.1 },
+            { name: 'BTC-NEAR', z: 1.2 },
+            { name: 'ETH-SOL', z: -0.5 },
+            { name: 'AVAX-NEAR', z: 2.8 },
+            { name: 'BTC-AVAX', z: -1.1 },
+            { name: 'ETH-NEAR', z: 0.3 },
+            { name: 'SOL-AVAX', z: -2.2 },
+            { name: 'BTC-USDT', z: 1.5 },
+            { name: 'ETH-USDT', z: -0.8 },
+        ];
+
+        function getHeatmapColor(z) {
+            const absZ = Math.abs(z);
+            if (absZ > 3) return 'bg-red-500 text-white';  // >3σ - alert
+            if (absZ > 2) return 'bg-white text-black';    // >2σ - strong signal
+            if (absZ > 1) return 'bg-gray-400 text-black';  // >1σ - weak signal
+            return 'bg-gray-700 text-gray-400';             // <1σ - noise
+        }
+
+        function renderHeatmap() {
+            const container = document.getElementById('heatmap-container');
+            container.innerHTML = pairs.map(p => `
+                <div class="heatmap-cell ${getHeatmapColor(p.z)}" title="${p.name}: ${p.z.toFixed(1)}σ">
+                    ${p.z > 0 ? '+' : ''}${p.z.toFixed(1)}
+                </div>
+            `).join('');
+        }
+
+        // =====================
+        // CORRELATION GRID
+        // =====================
+        const correlations = [
+            0.95, 0.87, 0.23, 0.91,
+            0.88, 0.94, 0.45, 0.89,
+            0.76, 0.82, 0.12, 0.67,
+            0.15, 0.34, 0.78, 0.91
+        ];
+
+        function getCorrelationColor(corr) {
+            if (corr < 0.3) return 'bg-amber-500';  // Breakdown detected
+            if (corr < 0.7) return 'bg-gray-500';   // Weak
+            return 'bg-white';                      // Strong correlation
+        }
+
+        function renderCorrelationGrid() {
+            const container = document.getElementById('correlation-grid');
+            container.innerHTML = correlations.map(c => `
+                <div class="h-4 ${getCorrelationColor(c)}" title="Correlation: ${c.toFixed(2)}"></div>
+            `).join('');
+        }
+
+        // =====================
+        // ALPHA DECAY CHART
+        // =====================
+        function initAlphaDecayChart() {
+            const ctx = document.getElementById('alpha-decay-chart').getContext('2d');
+            
+            // Generate decay data (simulated)
+            const labels = Array.from({length: 100}, (_, i) => i);
+            const data = labels.map(i => {
+                return 2.5 - (i * 0.015) + (Math.random() - 0.5) * 0.5;
+            });
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Predicted Edge',
+                        data: data,
+                        borderColor: '#ffffff',
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            display: true,
+                            grid: { color: '#333' },
+                            ticks: { 
+                                color: '#666',
+                                font: { size: 9 }
+                            }
+                        }
+                    },
+                    animation: false
+                }
+            });
+        }
+
+        // =====================
+        // LIVE UPDATES
+        // =====================
+        function updatePredictedSharpe() {
+            const sharpe = 1.84 + (Math.random() - 0.5) * 0.1;
+            const el = document.getElementById('pred-sharpe');
+            el.textContent = sharpe.toFixed(2);
+            
+            // Color based on threshold
+            if (sharpe < 0.5) {
+                el.classList.remove('text-white');
+                el.classList.add('text-red-500');
+                showAlert('Predicted Sharpe < 0.5');
+            } else if (sharpe < 1.0) {
+                el.classList.remove('text-white');
+                el.classList.add('text-amber-400');
+            } else {
+                el.className = 'sharpe-display text-white';
+            }
+        }
+
+        function timeString() {
+            return new Date().toLocaleTimeString();
+        }
+
+        function showAlert(reason) {
+            const overlay = document.getElementById('alert-overlay');
+            document.getElementById('alert-reason').textContent = reason;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function dismissAlert() {
+            const overlay = document.getElementById('alert-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        // Flashing alerts
+        function checkAlerts() {
+            // Check if any heatmap cell is >3σ
+            const maxZ = Math.max(...pairs.map(p => Math.abs(p.z)));
+            if (maxZ > 3) {
+                document.getElementById('heatmap-container').classList.add('flash-amber');
+            }
+        }
+
+        // =====================
+        // INITIALIZE
+        // =====================
+        renderHeatmap();
+        renderCorrelationGrid();
+        initAlphaDecayChart();
+        
+        // Live updates
+        setInterval(() => {
+            updatePredictedSharpe();
+            document.getElementById('last-calc-time').textContent = timeString();
+        }, 5000);
+
+        // Alert checks
+        setInterval(checkAlerts, 3000);
+    </script>
+</body>
+</html>

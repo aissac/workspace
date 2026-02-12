@@ -1,0 +1,205 @@
+{
+  "name": "R.Jim Simons - Whale Signal Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "seconds": 60
+            }
+          ]
+        }
+      },
+      "name": "Poll Every 60s",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.dune.com/api/v1/query/{QUERY_ID}/results",
+        "sendQueryParams": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "10"
+            },
+            {
+              "name": "min_amount_usd",
+              "value": "=10000"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-DUNE-API-KEY",
+              "value": "={{ $env.DUNE_API_KEY }}"
+            }
+          ]
+        }
+      },
+      "name": "Dune API - Whale Trades",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform Dune response to signal format\nconst results = $input.all()[0].json.result.rows;\n\nconst signals = results.map(row => ({\n  whale_wallet: row.from_address,\n  whale_label: row.wallet_label || 'Unknown_Whale',\n  token_address: row.token_bought_address || row.token_sold_address,\n  token_symbol: row.token_bought_symbol || row.token_sold_symbol,\n  action: row.token_bought_amount > 0 ? 'BUY' : 'SELL',\n  amount_usd: Math.abs(row.amount_usd),\n  token_price_usd: row.token_price_usd || row.amount_usd / row.token_amount,\n  chain: 'ethereum',\n  whale_metrics: {\n    total_trades: row.total_trades_30d,\n    win_rate: row.win_rate,\n    avg_roi_30d: row.avg_roi_30d,\n    avg_roi_7d: row.avg_roi_7d\n  }\n}));\n\nreturn signals;"
+      },
+      "name": "Transform to Signals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5000/api/process-signal",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "signal",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send to Python Processor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "sent",
+              "operator": {
+                "type": "equal",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "combineOperation": "all"
+      },
+      "name": "Signal Passed Filter?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.telegram_message }}",
+        "parseMode": "Markdown",
+        "disableWebPagePreview": true
+      },
+      "name": "Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [1250, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log filtered signals\nconst signal = $input.first().json;\nconsole.log('Signal filtered:', signal.reason);\nreturn [{ json: { logged: true, timestamp: new Date().toISOString() } }];"
+      },
+      "name": "Log Filtered",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 400]
+    }
+  ],
+  "connections": {
+    "Poll Every 60s": {
+      "main": [
+        [
+          {
+            "node": "Dune API - Whale Trades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dune API - Whale Trades": {
+      "main": [
+        [
+          {
+            "node": "Transform to Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform to Signals": {
+      "main": [
+        [
+          {
+            "node": "Send to Python Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Python Processor": {
+      "main": [
+        [
+          {
+            "node": "Signal Passed Filter?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal Passed Filter?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Filtered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["crypto", "trading", "whale-watcher"]
+}

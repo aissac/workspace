@@ -1,0 +1,19 @@
+# R.Jim Simons Dashboard Dependencies
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Data & Math
+numpy==1.24.3
+pandas==2.0.3
+
+# Database
+sqlite3-python  # Built-in
+
+# Async
+websockets==12.0
+
+# Utilities
+python-dotenv==1.0.0
+pydantic==2.5.0

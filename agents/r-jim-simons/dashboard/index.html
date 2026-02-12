@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R.Jim Simons — Live Strategy Dashboard</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .metric-positive { color: #10b981; }
+        .metric-negative { color: #ef4444; }
+        .metric-neutral { color: #6b7280; }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        .strategy-active {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+        
+        .strategy-inactive {
+            opacity: 0.6;
+            border-color: rgba(107, 114, 128, 0.3);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="glass fixed top-0 left-0 right-0 z-50 h-16 flex items-center justify-between px-6">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="trending-up" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight">R.Jim Simons</h1>
+                <p class="text-xs text-gray-400">Quantitative Trading Engine</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 pulse-ring"></div>
+                <span class="text-sm font-medium text-emerald-400">LIVE</span>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-400">Portfolio Value</p>
+                <p class="font-bold text-lg mono" id="portfolio-value">$10,000.00</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-6 px-6">
+        <!-- Top Stats Row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total P&L -->
+            <div class="glass rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Total P&L</p>
+                    <i data-lucide="activity" class="w-4 h-4 text-gray-500"></i>
+                </div>
+                <p class="text-2xl font-bold mono metric-positive" id="total-pnl">+$0.00</p>
+                <p class="text-xs metric-positive mt-1" id="total-pnl-pct">+0.00%</p>
+            </div>
+
+            <!-- Today's P&L -->
+            <div class="glass rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Today's P&L</p>
+                    <i data-lucide="calendar" class="w-4 h-4 text-gray-500"></i>
+                </div>
+                <p class="text-2xl font-bold mono" id="daily-pnl">$0.00</p>
+                <p class="text-xs text-gray-400 mt-1" id="daily-trades">0 trades</p>
+            </div>
+
+            <!-- Win Rate -->
+            <div class="glass rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Win Rate</p>
+                    <i data-lucide="target" class="w-4 h-4 text-gray-500"></i>
+                </div>
+                <p class="text-2xl font-bold mono" id="win-rate">--</p>
+                <p class="text-xs text-gray-400 mt-1" id="win-count">0 / 0 trades</p>
+            </div>
+
+            <!-- Sharpe Ratio -->
+            <div class="glass rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider">Sharpe Ratio</p>
+                    <i data-lucide="zap" class="w-4 h-4 text-gray-500"></i>
+                </div>
+                <p class="text-2xl font-bold mono" id="sharpe-ratio">--</p>
+                <p class="text-xs text-gray-400 mt-1">Risk-adjusted return</p>
+            </div>
+        </div>
+
+        <!-- Main Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: Charts -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Chart Card -->
+                <div class="glass rounded-xl p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-3">
+                            <select id="asset-select" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                                <option value="BTCUSDT">BTC/USDT</option>
+                                <option value="ETHUSDT">ETH/USDT</option>
+                                <option value="SOLUSDT">SOL/USDT</option>
+                                <option value="AVAXUSDT">AVAX/USDT</option>
+                            </select>
+                            <select id="timeframe-select" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                                <option value="1h">1H</option>
+                                <option value="4h" selected>4H</option>
+                                <option value="1d">1D</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">VWAP Strategy</span>
+                            <div id="strategy-status" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        </div>
+                    </div>
+                    <div id="chart" class="h-96 rounded-lg bg-gray-800"></div>
+                </div>
+
+                <!-- Performance Chart -->
+                <div class="glass rounded-xl p-4">
+                    <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-4 h-4"></i>
+                        Equity Curve
+                    </h3>
+                    <div id="equity-chart" class="h-48 rounded-lg bg-gray-800"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Strategy & Signals -->
+            <div class="space-y-6">
+                <!-- Strategy Status -->
+                <div class="glass rounded-xl p-4 strategy-active" id="strategy-card">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-semibold text-sm flex items-center gap-2">
+                            <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
+                            Strategy Status
+                        </h3>
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400">ACTIVE</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Strategy</span>
+                            <span class="text-xs font-medium">VWAP Mean Reversion</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Signal Filter</span>
+                            <span class="text-xs font-medium">Trend Confirmed</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Position Sizing</span>
+                            <span class="text-xs font-medium text-emerald-400">0.25x Kelly</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-gray-400">Last Calculation</span>
+                            <span class="text-xs mono text-cyan-400" id="last-calc">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Positions -->
+                <div class="glass rounded-xl p-4">
+                    <h3 class="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="wallet" class="w-4 h-4"></i>
+                        Open Positions
+                    </h3>
+                    <div id="positions-list" class="space-y-2">
+                        <div class="text-sm text-gray-500 text-center py-4">No open positions</div>
+                    </div>
+                </div>
+
+                <!-- Recent Signals -->
+                <div class="glass rounded-xl p-4">
+                    <h3 class="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="bell" class="w-4 h-4"></i>
+                        Recent Signals
+                    </h3>
+                    <div id="signals-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <!-- Signals will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Risk Metrics -->
+                <div class="glass rounded-xl p-4">
+                    <h3 class="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        Risk Dashboard
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-400">Daily Drawdown</span>
+                                <span class="mono" id="daily-drawdown">0.00%</span>
+                            </div>
+                            <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="drawdown-bar" class="h-full bg-emerald-500 transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-400">Portfolio Heat</span>
+                                <span class="mono" id="portfolio-heat">0%</span>
+                            </div>
+                            <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="heat-bar" class="h-full bg-emerald-500 transition-all" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-gray-700">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400">Kelly Efficiency</span>
+                                <span class="text-xs font-medium mono text-cyan-400" id="kelly-eff">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-8 pt-6 border-t border-gray-800 text-center text-xs text-gray-500">
+            <p>R.Jim Simons Quantitative Engine • Medallion Fund Methodology • Edge First, Profit Second</p>
+        </footer>
+    </main>
+
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+
+        // =====================
+        // CHART CONFIGURATION
+        // =====================
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            layout: {
+                background: { color: '#1f2937' },
+                textColor: '#d1d5db',
+            },
+            grid: {
+                vertLines: { color: '#374151' },
+                horzLines: { color: '#374151' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#374151',
+            },
+            timeScale: {
+                borderColor: '#374151',
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
+
+        // Candle series
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#10b981',
+            downColor: '#ef4444',
+            borderUpColor: '#10b981',
+            borderDownColor: '#ef4444',
+            wickUpColor: '#10b981',
+            wickDownColor: '#ef4444',
+        });
+
+        // VWAP series
+        const vwapSeries = chart.addLineSeries({
+            color: '#3b82f6',
+            lineWidth: 2,
+            title: 'VWAP',
+        });
+
+        // Bollinger Bands
+        const upperBandSeries = chart.addLineSeries({
+            color: '#ef4444',
+            lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+        });
+        const lowerBandSeries = chart.addLineSeries({
+            color: '#10b981',
+            lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+        });
+
+        // Signal markers
+        const markers = [];
+
+        // =====================
+        // EQUITY CURVE CHART
+        // =====================
+        const equityChart = LightweightCharts.createChart(document.getElementById('equity-chart'), {
+            layout: {
+                background: { color: '#1f2937' },
+                textColor: '#d1d5db',
+            },
+            grid: {
+                vertLines: { color: '#374151' },
+                horzLines: { color: '#374151' },
+            },
+            rightPriceScale: {
+                borderColor: '#374151',
+            },
+            timeScale: {
+                borderColor: '#374151',
+            },
+        });
+
+        const equitySeries = equityChart.addAreaSeries({
+            lineColor: '#10b981',
+            topColor: 'rgba(16, 185, 129, 0.4)',
+            bottomColor: 'rgba(16, 185, 129, 0.0)',
+            lineWidth: 2,
+        });
+
+        // =====================
+        // MOCK DATA
+        // =====================
+        function generateMockData() {
+            const data = [];
+            const now = new Date();
+            let price = 45000;
+            
+            for (let i = 100; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 4 * 60 * 60 * 1000);
+                const volatility = price * 0.02;
+                const open = price + (Math.random() - 0.5) * volatility;
+                const close = open + (Math.random() - 0.5) * volatility;
+                const high = Math.max(open, close) + Math.random() * volatility * 0.5;
+                const low = Math.min(open, close) - Math.random() * volatility * 0.5;
+                
+                data.push({
+                    time: time.toISOString().split('T')[0],
+                    open: open,
+                    high: high,
+                    low: low,
+                    close: close,
+                });
+                
+                price = close;
+            }
+            
+            return data;
+        }
+
+        function calculateVWAP(data) {
+            const vwapData = [];
+            let cumulativeTPV = 0;
+            let cumulativeVolume = 0;
+            
+            for (let i = 0; i < data.length; i++) {
+                const typicalPrice = (data[i].high + data[i].low + data[i].close) / 3;
+                const volume = Math.random() * 100 + 50; // Mock volume
+                
+                cumulativeTPV += typicalPrice * volume;
+                cumulativeVolume += volume;
+                
+                const vwap = cumulativeTPV / cumulativeVolume;
+                const stdDev = typicalPrice * 0.02; // Mock std dev
+                
+                vwapData.push({
+                    time: data[i].time,
+                    vwap: vwap,
+                    upper: vwap + 2 * stdDev,
+                    lower: vwap - 2 * stdDev,
+                    ...data[i]
+                });
+            }
+            
+            return vwapData;
+        }
+
+        // Load data
+        const mockData = generateMockData();
+        const vwapData = calculateVWAP(mockData);
+
+        candleSeries.setData(mockData.map(d => ({
+            time: d.time,
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+        })));
+
+        vwapSeries.setData(vwapData.map(d => ({ time: d.time, value: d.vwap })));
+        upperBandSeries.setData(vwapData.map(d => ({ time: d.time, value: d.upper })));
+        lowerBandSeries.setData(vwapData.map(d => ({ time: d.time, value: d.lower })));
+
+        chart.timeScale().fitContent();
+
+        // Equity curve data
+        const equityData = [];
+        let equity = 10000;
+        for (let i = 0; i < 30; i++) {
+            const time = new Date(now.getTime() - (30 - i) * 24 * 60 * 60 * 1000);
+            equity = equity * (1 + (Math.random() - 0.4) * 0.02);
+            equityData.push({
+                time: time.toISOString().split('T')[0],
+                value: equity,
+            });
+        }
+        equitySeries.setData(equityData);
+        equityChart.timeScale().fitContent();
+
+        // =====================
+        // REAL-TIME UPDATES
+        // =====================
+        function updateMetrics() {
+            // Simulate metrics
+            const pnl = (equity - 10000).toFixed(2);
+            const pnlPct = (((equity - 10000) / 10000) * 100).toFixed(2);
+            
+            document.getElementById('total-pnl').textContent = (pnl >= 0 ? '+' : '') + '$' + pnl;
+            document.getElementById('total-pnl').className = 'text-2xl font-bold mono ' + (pnl >= 0 ? 'metric-positive' : 'metric-negative');
+            document.getElementById('total-pnl-pct').textContent = (pnl >= 0 ? '+' : '') + pnlPct + '%';
+            document.getElementById('total-pnl-pct').className = 'text-xs mt-1 ' + (pnl >= 0 ? 'metric-positive' : 'metric-negative');
+            document.getElementById('portfolio-value').textContent = '$' + equity.toFixed(2);
+            
+            document.getElementById('win-rate').textContent = '58%';
+            document.getElementById('win-count').textContent = '29 / 50 trades';
+            document.getElementById('sharpe-ratio').textContent = '1.24';
+            
+            document.getElementById('last-calc').textContent = new Date().toLocaleTimeString();
+        }
+
+        function addSignal(type, symbol, price, confidence) {
+            const signalsList = document.getElementById('signals-list');
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const signalEl = document.createElement('div');
+            signalEl.className = 'flex items-center justify-between p-3 rounded-lg bg-gray-800/50 border border-gray-700';
+            signalEl.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full ${type === 'BUY' ? 'bg-emerald-500' : 'bg-rose-500'}"></div>
+                    <div>
+                        <p class="text-sm font-medium">${type} ${symbol}</p>
+                        <p class="text-xs text-gray-400">${now}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold mono">$${price.toLocaleString()}</p>
+                    <p class="text-xs ${confidence >= 0.8 ? 'text-emerald-400' : 'text-yellow-400'}">${(confidence * 100).toFixed(0)}% conf</p>
+                </div>
+            `;
+            
+            signalsList.insertBefore(signalEl, signalsList.firstChild);
+            
+            // Keep only last 10
+            while (signalsList.children.length > 10) {
+                signalsList.removeChild(signalsList.lastChild);
+            }
+        }
+
+        // Initial metrics
+        updateMetrics();
+        
+        // Simulate live updates
+        setInterval(updateMetrics, 5000);
+        
+        // Add a mock signal every 30 seconds
+        setInterval(() => {
+            const assets = ['BTC', 'ETH', 'SOL', 'AVAX'];
+            const asset = assets[Math.floor(Math.random() * assets.length)];
+            const price = asset === 'BTC' ? 45000 + Math.random() * 1000 : 
+                         asset === 'ETH' ? 2800 + Math.random() * 100 :
+                         asset === 'SOL' ? 110 + Math.random() * 10 : 35 + Math.random() * 5;
+            addSignal('BUY', asset + 'USDT', price.toFixed(2), 0.75 + Math.random() * 0.2);
+        }, 30000);
+
+        // Chart resize
+        window.addEventListener('resize', () => {
+            chart.applyOptions({ width: document.getElementById('chart').clientWidth });
+            equityChart.applyOptions({ width: document.getElementById('equity-chart').clientWidth });
+        });
+    </script>
+</body>
+</html>
